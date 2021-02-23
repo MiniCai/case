@@ -111,26 +111,26 @@ id 是点击锚点定位所需
 
 ```javascript
 getDom() {
-      const hArr = ["H1", "H2", "H3", "H4", "H5", "H6"],
-        target = [];
-      let dom = document.querySelectorAll("*");
-      dom.forEach((item, index) => {
-        if (hArr.indexOf(item.nodeName) > -1) {
-          item.id = `${item.nodeName}_${index}`;
-          item.classList.add("lighthigh-follow");
-          target.push({
-            value: item.nodeName,
-            label: item.innerText,
-            href: `#${item.id}`,
-          });
-        }
+  const hArr = ["H1", "H2", "H3", "H4", "H5", "H6"],
+    target = [];
+  let dom = document.querySelectorAll("*");
+  dom.forEach((item, index) => {
+    if (hArr.indexOf(item.nodeName) > -1) {
+      item.id = `${item.nodeName}_${index}`;
+      item.classList.add("lighthigh-follow");
+      target.push({
+        value: item.nodeName,
+        label: item.innerText,
+        href: `#${item.id}`,
       });
-      var directory = this.$refs.directoryUl,
-        fragments = "";
-      target.slice(2).forEach((item) => {
-        fragments += this.integrationLi(item);
-      });
-      directory.insertAdjacentHTML("beforeend", fragments);
+    }
+  });
+  var directory = this.$refs.directoryUl,
+    fragments = "";
+  target.slice(2).forEach((item) => {
+    fragments += this.integrationLi(item);
+  });
+  directory.insertAdjacentHTML("beforeend", fragments);
 }
 ```
 
@@ -139,7 +139,7 @@ getDom() {
 
 ```javascript
 updated() {
-    this.getDom();
+  this.getDom();
 }
 ```
 
@@ -154,10 +154,10 @@ updated() {
 
 ```javascript
 integrationLi(item) {
-      let li = `<li><a class="${item.value} li lighthigh-follow-li" data-id="${
-        item.href
-      }">${item.label}</a></li>`;
-      return li;
+  let li = `<li><a class="${item.value} li lighthigh-follow-li" data-id="${
+    item.href
+  }">${item.label}</a></li>`;
+  return li;
 }
 ```
 
@@ -166,16 +166,16 @@ integrationLi(item) {
 
 ```javascript
 lightHigh(e) {
-      var directoryLi = this.$refs.directoryUl.childNodes,
-        target = e.target,
-        id = target.dataset.id;
-      directoryLi.forEach((item) => {
-        item.childNodes[0].classList.remove("active");
-      });
-      target.classList.add("active");
-      // 锚点定位
-      let offsetTop = document.querySelector(id).offsetTop;
-      document.documentElement.scrollTop = offsetTop - 80;
+  var directoryLi = this.$refs.directoryUl.childNodes,
+    target = e.target,
+    id = target.dataset.id;
+  directoryLi.forEach((item) => {
+    item.childNodes[0].classList.remove("active");
+  });
+  target.classList.add("active");
+  // 锚点定位
+  let offsetTop = document.querySelector(id).offsetTop;
+  document.documentElement.scrollTop = offsetTop - 80;
 }
 ```
 
@@ -192,24 +192,24 @@ rectObject = object.getBoundingClientRect();
 
 ```javascript
 handleScroll() {
-      let dom = document.querySelectorAll(".lighthigh-follow"),
-        clientH =
-          document.documentElement.clientHeight || document.body.clientHeight,
-        directoryLi = document.querySelectorAll(".lighthigh-follow-li");
-      if (dom.length > 2) {
-        dom.forEach((item, index) => {
-          if (index > 1) {
-            let clientRectTop = item.getBoundingClientRect().top; // 内容区的top 距离窗口的高度;
-            if (clientRectTop <= clientH * 0.4) {
-              directoryLi[index - 2].classList.add("active");
-              directoryLi.forEach((item, idx) => {
-                if (idx !== index - 2) {
-                  item.classList.remove("active");
-                }
-              });
+  let dom = document.querySelectorAll(".lighthigh-follow"),
+    clientH =
+      document.documentElement.clientHeight || document.body.clientHeight,
+    directoryLi = document.querySelectorAll(".lighthigh-follow-li");
+  if (dom.length > 2) {
+    dom.forEach((item, index) => {
+      if (index > 1) {
+        let clientRectTop = item.getBoundingClientRect().top; // 内容区的top 距离窗口的高度;
+        if (clientRectTop <= clientH * 0.4) {
+          directoryLi[index - 2].classList.add("active");
+          directoryLi.forEach((item, idx) => {
+            if (idx !== index - 2) {
+              item.classList.remove("active");
             }
-          }
-        });
+          });
+        }
       }
+    });
+  }
 }
 ```
