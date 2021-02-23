@@ -1,8 +1,9 @@
 # case
+
 提取文章正文的H标签作为目录
 
 
-# 需求细定
+## 需求细定
 
 * 提取 HTML 的 H 标签作为目录，根据 H1 ~ H6 的语义制定相应样式（字号、边距） ，目录模块固定在页面，悬浮时候添加背景色
 
@@ -14,17 +15,13 @@
 
 ![image](https://github.com/MiniCai/images/blob/main/images/%E4%BC%81%E4%B8%9A%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_ac640596-d6ae-4ce1-99e3-b52c062a102a.png)
 
-# 开发要点
+
+## 开发要点
 
 来，有事没事先上一波代码~~~
 
 ```html
-
-<ul
-      class="directory-wrapper"
-      ref="directoryUl"
-      @click="lightHigh($event)"
-></ul>
+<ul class="directory-wrapper" ref="directoryUl" @click="lightHigh($event)"></ul>
 ```
 
 ```css
@@ -42,7 +39,6 @@
 .li.active::before {
   background-color: rgba(255, 208, 75, 1) !important;
 }
-
 .li:hover {
   background-color: rgba(255, 255, 255, 0.5);
 }
@@ -102,7 +98,8 @@
 </style>
 ```
 
-#### 由于提取的h标签，可能会包含嵌套关系，所以采用document.querySelectorAll("*") 先提取全部标签，然后再筛选出H1~ H6。
+
+**由于提取的h标签，可能会包含嵌套关系，所以采用document.querySelectorAll("*") 先提取全部标签，然后再筛选出H1~ H6。**
 
 根据H标签的语义及常规写作习惯，规定相应样式
 
@@ -137,7 +134,8 @@ getDom() {
 }
 ```
 
-#### 因为正文数据是后端返回来的，等待数据返回后需要重新渲染，所以在mounted 的时候是拿不到真实全部渲染完的html，经分析后需在updated 时期获取（ 也可以尝试一下$nextTick，毕竟是mvvm架构）。updated不能操作data里的数据，否则造成死循环。。。
+
+**因为正文数据是后端返回来的，等待数据返回后需要重新渲染，所以在mounted 的时候是拿不到真实全部渲染完的html，经分析后需在updated 时期获取（ 也可以尝试一下$nextTick，毕竟是mvvm架构）。updated不能操作data里的数据，否则造成死循环。。。**
 
 ```javascript
 updated() {
@@ -147,7 +145,8 @@ updated() {
 
 ![image](https://github.com/MiniCai/images/blob/main/images/WeChat8835faa64bfcc7b4dae9fb696c77f2ae.png)
 
-#### 根据上述生成节点插入dom树。为了减少重排，这里推荐一个很好用api —— insertAdjacentHTML
+
+**根据上述生成节点插入dom树。为了减少重排，这里推荐一个很好用api —— insertAdjacentHTML**
 
 ![image](https://github.com/MiniCai/images/blob/main/images/WeChat4d3979595db124e3f81fbdd86af54fff.png)
 
@@ -162,7 +161,8 @@ integrationLi(item) {
 }
 ```
 
-#### 上面的步骤完成后数据就出来了，duang！点击锚点定位，样式交互这里采用添加、移除class 进行 目录标题的高亮，以减少重绘。锚点定位需要获取正文标题的offsetTop， 也可以用getBoundingClientRect， ScrollIntoView等方法。lightHigh 方法是绑定在父元素，目录li 委托父级代为执行事件，也就是事件委托，利用冒泡机制大大减少了对dom的操作，提高性能
+
+**上面的步骤完成后数据就出来了，duang！点击锚点定位，样式交互这里采用添加、移除class 进行 目录标题的高亮，以减少重绘。锚点定位需要获取正文标题的offsetTop， 也可以用getBoundingClientRect， ScrollIntoView等方法。lightHigh 方法是绑定在父元素，目录li 委托父级代为执行事件，也就是事件委托，利用冒泡机制大大减少了对dom的操作，提高性能**
 
 ```javascript
 lightHigh(e) {
@@ -178,6 +178,7 @@ lightHigh(e) {
       document.documentElement.scrollTop = offsetTop - 80;
 }
 ```
+
 
 #### 最后一个是滚动高亮，我是用getBoundingClientRect这个 api，当然也可以用offsetTop等方法
 
