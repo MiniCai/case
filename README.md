@@ -19,7 +19,90 @@
 </br>
 来，有事没事先上一波 html 的代码~~~
 </br>
-![image](https://github.com/MiniCai/images/blob/main/images/WeChatc368f1e3408599be183289f5259333c7.png)
+```
+<!-- html 目录 -->
+
+<ul
+      class="directory-wrapper"
+      ref="directoryUl"
+      @click="lightHigh($event)"
+></ul>
+
+<style>
+/* 目录css */
+.li {
+  display: block;
+  color: #313131;
+  line-height: 42px;
+  cursor: pointer;
+  padding: 0 24px;
+}
+.li.active {
+  color: rgba(255, 208, 75, 1) !important;
+}
+.li.active::before {
+  background-color: rgba(255, 208, 75, 1) !important;
+}
+
+.li:hover {
+  background-color: rgba(255, 255, 255, 0.5);
+}
+.H1 {
+  font-size: 18px;
+  font-weight: 700;
+}
+.H1::before {
+  content: "";
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 8px;
+  background-color: #999;
+  border-radius: 50%;
+  position: relative;
+  top: -2px;
+}
+.H2 {
+  font-size: 16px;
+  padding-left: 44px;
+}
+.H2::before {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 8px;
+  background-color: #999;
+  border-radius: 50%;
+  position: relative;
+  top: -2px;
+}
+.H3 {
+  padding-left: 62px;
+}
+.H4,
+.H5,
+.H6 {
+  font-size: 12px;
+  padding-left: 76px;
+}
+.H3::before,
+.H4::before,
+.H5::before,
+.H6::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 8px;
+  background-color: #999;
+  border-radius: 50%;
+  position: relative;
+  top: -2.5px;
+}
+</style>
+```
+
 </br>
 由于提取的h标签，可能会包含嵌套关系，所以采用document.querySelectorAll("*") 先提取全部标签，然后再筛选出H1~ H6。
 </br>
@@ -34,13 +117,40 @@ lighthigh-follow 是为了滚动高亮需要筛选出目标标题缩添加的特
 id 是点击锚点定位所需
 </br>
 
-![image](https://github.com/MiniCai/images/blob/main/images/WechatIMG3.jpeg)
+```
+getDom() {
+      const hArr = ["H1", "H2", "H3", "H4", "H5", "H6"],
+        target = [];
+      let dom = document.querySelectorAll("*");
+      dom.forEach((item, index) => {
+        if (hArr.indexOf(item.nodeName) > -1) {
+          item.id = `${item.nodeName}_${index}`;
+          item.classList.add("lighthigh-follow");
+          target.push({
+            value: item.nodeName,
+            label: item.innerText,
+            href: `#${item.id}`,
+          });
+        }
+      });
+      var directory = this.$refs.directoryUl,
+        fragments = "";
+      target.slice(2).forEach((item) => {
+        fragments += this.integrationLi(item);
+      });
+      directory.insertAdjacentHTML("beforeend", fragments);
+}
+```
 </br>
 
 因为正文数据是后端返回来的，等待数据返回后需要重新渲染，所以在mounted 的时候是拿不到真实全部渲染完的html，经分析后需在updated 时期获取（ 也可以尝试一下$nextTick，毕竟是mvvm架构）。updated不能操作data里的数据，否则造成死循环。。。
 </br>
 
-![image](https://github.com/MiniCai/images/blob/main/images/WechatIMG2.jpeg)
+```
+updated() {
+    this.getDom();
+}
+```
 </br>
 ![image](https://github.com/MiniCai/images/blob/main/images/WeChat8835faa64bfcc7b4dae9fb696c77f2ae.png)
 </br>
@@ -53,13 +163,32 @@ id 是点击锚点定位所需
 这里的text是 目录fragments
 </br>
 
-![image](https://github.com/MiniCai/images/blob/main/images/WechatIMG4.jpeg)
+```
+integrationLi(item) {
+      let li = `<li><a class="${item.value} li lighthigh-follow-li" data-id="${
+        item.href
+      }">${item.label}</a></li>`;
+      return li;
+}
+```
 </br>
 
-上面的步骤完成后数据就出来了，duang！点击锚点定位，样式交互这里采用添加、移除class 进行 目录标题的高亮，以减少重绘。锚点定位需要获取正文标题的offsetTop， 也可以用getBoundingClientRect， ScrollIntoView等方法
+上面的步骤完成后数据就出来了，duang！点击锚点定位，样式交互这里采用添加、移除class 进行 目录标题的高亮，以减少重绘。锚点定位需要获取正文标题的offsetTop， 也可以用getBoundingClientRect， ScrollIntoView等方法。lightHigh 方法是绑定在父元素，目录li 委托父级代为执行事件，也就是事件委托，利用冒泡机制大大减少了对dom的操作，提高性能
 </br>
-
-![image](https://github.com/MiniCai/images/blob/main/images/WechatIMG5.jpeg)
+```
+lightHigh(e) {
+      var directoryLi = this.$refs.directoryUl.childNodes,
+        target = e.target,
+        id = target.dataset.id;
+      directoryLi.forEach((item) => {
+        item.childNodes[0].classList.remove("active");
+      });
+      target.classList.add("active");
+      // 锚点定位
+      let offsetTop = document.querySelector(id).offsetTop;
+      document.documentElement.scrollTop = offsetTop - 80;
+}
+```
 </br>
 
 最后一个是滚动高亮，我是用getBoundingClientRect这个 api，当然也可以用offsetTop等方法
@@ -73,5 +202,27 @@ rectObject = object.getBoundingClientRect();
 
 ![image](https://github.com/MiniCai/images/blob/main/images/rect.png)
 </br>
-![image](https://github.com/MiniCai/images/blob/main/images/WechatIMG6.jpeg)
+```
+handleScroll() {
+      let dom = document.querySelectorAll(".lighthigh-follow"),
+        clientH =
+          document.documentElement.clientHeight || document.body.clientHeight,
+        directoryLi = document.querySelectorAll(".lighthigh-follow-li");
+      if (dom.length > 2) {
+        dom.forEach((item, index) => {
+          if (index > 1) {
+            let clientRectTop = item.getBoundingClientRect().top; // 内容区的top 距离窗口的高度;
+            if (clientRectTop <= clientH * 0.4) {
+              directoryLi[index - 2].classList.add("active");
+              directoryLi.forEach((item, idx) => {
+                if (idx !== index - 2) {
+                  item.classList.remove("active");
+                }
+              });
+            }
+          }
+        });
+      }
+}
+```
 </br>
