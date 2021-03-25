@@ -13,6 +13,7 @@
 ## 开发要点
 
 由于 editor 使用的是第三方的，所以 viewer 也配套了第三方的。
+
 ```html
 <viewer :initialValue="data.val" v-if="data.val" height="100%" />
 <!-- 目录 -->
@@ -28,31 +29,28 @@
 </ul>
 ```
 
-**分析如何提取的 h 标签**
+**分析如何提取 h 标签**
 
- `document.querySelectorAll("Hx")` (x表示1~6), 这样确实能筛选出正文的全部H标签，但是嵌套关系就会被打乱。所以改用 `document.querySelectorAll("*")` 提取, 防止嵌套关系被打乱。
- 
- 正文数据是由后端返回来，再经过第三方工具读取出来。这里涉及一个重渲染问题。
- 
- 第一想法是从生命周期着手，开始我是想在 updated 时期操作dom插入目录文档片段，好像很完美的样子。
+如提取文档
 
- 但是vue是mvvm模型框架，底层就处理了一堆dom操作，再自己操作dom，正如XXX吐槽说的：你这是搞事情！！！
-
- 因此觅得更合理的方法 -- vue针对DOM 更新的常用方法 `Vue.nextTick(callback)`:
- 
- 在下次 DOM 更新循环结束之后执行延迟回调。在修改数据之后立即使用这个方法，获取更新后的 DOM。
-
-```javascript
-mounted() {
-  this.$nextTick((_) => {
-    this.getDom();
-  });
-  window.addEventListener("scroll", this.handleScroll, true);
-}
-destroyed() {
-    window.removeEventListener("scroll", this.handleScroll, true);
-}
+```html
+<div>
+  <h1> 1. xxx </h1>
+  <h2> 1.1 xxx </h2>
+  <p> 1.1的正文 </p>
+  <h2> 1.2 xxx </h2>
+  <p> 1.2的正文 </p>
+  <h1> 2. xxx </h1>
+  <h2> 2.1 xxx </h2>
+  <p> 2.1的正文 </p>
+</div>
 ```
+
+若直接使用`document.querySelectorAll("Hx")` (x 表示 1~6), 这样确实能筛选出正文的全部 H 标签，但是提取结果却是['1', '2']，['1.1', '1.2', '2.1'], 显然这并不是我想要的结果，那怎么才能不打乱层级关系呢？
+
+通过观察得知，h1和h2标签虽然有层级关系，但是两个标签之间实际上是「平铺」关系，所谓平铺关系，即h1不会嵌套h2, 也就是说不会出现`<h1><h2></h2></h1>`这样的情况, 既然是「平铺」关系, 那么就可以将其看作一条队列, 我们只需要从队首到队尾依次提取dom节点即可得知h1和h2的层级关系
+
+所以这里应该采用 `document.querySelectorAll("*")` 提取, 依次遍历该队列并记录下h1~h6的节点，最终得到这样一个数组['1', '1.1', '1.2', '2', '2.1']，通过这个数组即可得到标题的层级关系
 
 ```javascript
 getDom() {
@@ -74,7 +72,23 @@ getDom() {
 }
 ```
 
-锚点定位需要获取正文标题的 offsetTop， 也可以用 getBoundingClientRect， ScrollIntoView 等方法。
+**锚点定位和滚动高亮的解法**有多种，解法也差不多，这里大概分析以下几种解法：
+
+解法1，通过 *offsetTop* 来获取dom节点的位置
+
+但是这种方法需要计算一大堆offsetTop和scrollTop，很麻烦，而且其实已经有现成的接口可以直接得出结果（就是getBoundingClientRect）
+
+解法2，通过 *getBoundingClientRect* 来获取dom节点和当前可视区域的位置关系
+
+以上两个解法都必须监听好几个事件（如：scroll，resize），甚至假如因为某个动画或操作将某个dom的高度发生变化甚至是添加删除，导致dom的位置发生了变化，如此一来，监听的事件就成几何倍数增长了，且无论怎么做都还是有遗漏的可能性
+
+那怎么解决呢？
+
+都2021了，你真的不打算尝试一下新的黑科技（Intersection Observer）吗？
+
+解法3，通过 *Intersection Observer* 实现dom的观察者模式来得知dom的位置变化，不过这个api比较新，所以考虑业务场景的话，尤其是pc端需要兼容一下（可参考polyfill）
+
+最后顺手贴下代码。。。
 
 ```javascript
 lightHigh(item) {
@@ -85,8 +99,6 @@ lightHigh(item) {
   document.documentElement.scrollTop = offsetTop - clientH * 0.3; // 锚点定位
 }
 ```
-
-最后一个是滚动高亮，这里使用了 getBoundingClientRect 这个 api，当然也可以用 offsetTop 等方法
 
 ```javascript
 handleScroll() {
